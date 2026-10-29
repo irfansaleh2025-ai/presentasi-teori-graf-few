@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Presentasi UTS Teori Graf — Sistem Food–Energy–Water & ALC
 
-## Getting Started
+Website presentasi interaktif (15 slide, 16:9) berdasarkan artikel
+Rozhkov dkk. (2025), *Identifying Leverage Points for Sustainable Transitions in Urban–Rural Systems*,
+Environmental Science and Policy.
 
-First, run the development server:
+## Menjalankan
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000 (development)
+# atau versi produksi:
+npm run build && npm run start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Halaman      | Fungsi                                                    |
+| ------------ | --------------------------------------------------------- |
+| `/`          | Presentasi utama (`/#7` membuka slide 7 langsung)          |
+| `/presenter` | Mode presenter: slide aktif, slide berikutnya, catatan, timer. Tersinkron dengan jendela utama |
+| `/print`     | Semua slide statis untuk **Cetak / Save as PDF** (1 slide per halaman) |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Shortcut keyboard
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Tombol                  | Aksi                                   |
+| ----------------------- | -------------------------------------- |
+| → / Space / PageDown    | Maju (menelusuri langkah sorotan dulu pada slide 7, 8, 10, 11) |
+| ← / PageUp              | Mundur                                 |
+| Home / End              | Slide pertama / terakhir               |
+| F                       | Fullscreen                             |
+| O                       | Overview seluruh slide (Esc untuk menutup) |
+| N                       | Catatan pembicara                      |
+| S                       | Buka mode presenter                    |
+| M                       | Matikan / nyalakan animasi dekoratif (disimpan di browser) |
 
-## Learn More
+Shortcut tidak aktif ketika fokus berada di input/textarea.
 
-To learn more about Next.js, take a look at the following resources:
+## Desain visual
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Konsep **Modern Agriculture × Scientific Nature**. Palet warna didefinisikan sekali sebagai CSS variables
+di `app/globals.css` (`--color-forest`, `--color-leaf`, `--color-fresh`, `--color-sage`, `--color-cream`,
+`--color-soil`, `--color-wheat`, `--color-water`, `--color-charcoal`) dan dipakai oleh Tailwind maupun SVG.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Animasi looping dekoratif (`components/decor.tsx`, `FewDiagram.tsx`, aliran edge di `AnimatedGraph.tsx`)
+memakai CSS keyframes `loop-*` — ringan dan tanpa timer JavaScript. Animasi otomatis berhenti untuk
+`prefers-reduced-motion`, tombol **M**, thumbnail overview, dan halaman cetak.
 
-## Deploy on Vercel
+## Struktur
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/                    page.tsx, presenter/, print/, layout.tsx, globals.css
+components/
+  Presentation.tsx      navigasi, transisi, progress bar, catatan
+  SlideControls.tsx     tombol kontrol
+  SlideOverview.tsx     grid overview
+  SlideRenderer.tsx     peta id slide → komponen
+  SlideStage.tsx        kanvas 1600×900 yang diskalakan ke layar
+  AnimatedGraph.tsx     graf berarah SVG (vertex & edge beranimasi, sorotan)
+  AnimatedFlowchart.tsx flowchart bertahap
+  StatCounter.tsx       angka count-up
+  FewDiagram.tsx        diagram Food–Energy–Water berwarna dengan aliran beranimasi
+  illustrations.tsx     ilustrasi vektor: rumah, sawah, pohon, gedung kota, balai kota, turbin angin,
+                        panel surya, bendungan, menara air, tiang listrik, pabrik, sungai, jalan, pipa, jaringan graf
+  scenes.tsx            komposisi latar berbeda untuk tiap slide (SlideScene n={1..15})
+  decor.tsx             BotanicalBackground: FloatingLeaves, CornerSprig, ContourLines, CropRows,
+                        AgriculturalLandscape, FlowingWater, GrowingPlant/PlantRow, AmbientNetwork
+  slides/               tata letak 15 slide
+data/
+  slides.ts             SEMUA teks slide + catatan pembicara
+  graphs.ts             graf ilustratif (Slide 7, 9–10)
+lib/
+  graph-metrics.ts      indegree, outdegree, degree, betweenness (Brandes), closeness, PageRank, eigenvector, siklus
+  deck-store.ts         state navigasi (hash URL + BroadcastChannel)
+  use-shortcuts.ts      listener keyboard tunggal
+  decor-store.ts        pengaturan on/off animasi dekoratif
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Yang perlu dilengkapi sebelum presentasi
+
+- `data/slides.ts` → `s01.group`: nama anggota, NIM, kelas, institusi.
+- Slide 12: angka karakteristik graf berasal dari materi — verifikasi terhadap jurnal asli.
+- Slide 13: placeholder untuk Tabel 4 (komposisi 7 cluster), contoh variabel, dan Gambar 6.
+
+Angka pada Slide 10 dihitung otomatis oleh `lib/graph-metrics.ts` dari graf yang sama dengan Slide 9,
+sehingga jika graf di `data/graphs.ts` diubah, perhitungannya ikut menyesuaikan.

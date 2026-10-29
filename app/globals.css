@@ -1,26 +1,392 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Palet "Modern Agriculture × Scientific Nature".
+ * `@theme` (bukan inline) agar setiap warna juga tersedia sebagai CSS variable di :root,
+ * sehingga SVG dapat memakai var(--color-…) — ubah warna cukup di sini.
+ */
+@theme {
+  --color-forest: #234b35;
+  --color-leaf: #6f9e58;
+  --color-fresh: #a7c957;
+  --color-sage: #dce7d3;
+  --color-cream: #f7f5eb;
+  --color-soil: #8a6546;
+  --color-wheat: #d9ae55;
+  --color-water: #79b8c4;
+  --color-charcoal: #26312a;
+
+  /* Turunan untuk kontras teks dan latar lembut */
+  --color-mist: #edf2e6;
+  --color-muted: #56635a;
+  --color-faint: #8f998d;
+  --color-line: #d9dfcf;
+  --color-water-deep: #3b8391;
+  --color-water-soft: #e2f0f1;
+  --color-wheat-deep: #9a7020;
+  --color-wheat-soft: #f6ecd2;
+  --color-soil-soft: #efe4d9;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  height: 100%;
+  background: var(--color-cream);
+  color: var(--color-charcoal);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Halo di belakang label SVG agar tetap terbaca saat bersinggungan dengan edge */
+.svg-halo {
+  paint-order: stroke;
+  stroke: var(--color-cream);
+  stroke-width: 6px;
+  stroke-linejoin: round;
+}
+
+.katex {
+  font-size: 1.05em;
+}
+
+/* Tekstur kertas/grain yang sangat ringan (statis) */
+.paper-grain {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.15  0 0 0 0 0.2  0 0 0 0 0.16  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.06;
+  mix-blend-mode: multiply;
+}
+
+/* ---------- Animasi looping dekoratif ----------
+ * Semua animasi loop memakai kelas `loop-*` (CSS keyframes, hanya transform/opacity/dashoffset).
+ * Keadaan dasar setiap elemen = keadaan akhir yang rapi, sehingga saat animasi
+ * dimatikan (reduced motion, toggle "M", thumbnail, cetak) tampilan tetap utuh.
+ */
+@keyframes leaf-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--r0, -4deg));
+  }
+  50% {
+    transform: translate3d(var(--dx, 6px), var(--dy, -16px), 0) rotate(var(--r1, 5deg));
+  }
+}
+.loop-float {
+  animation: leaf-float var(--dur, 6s) ease-in-out var(--delay, 0s) infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-2.5deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+.loop-sway {
+  animation: sway var(--dur, 5s) ease-in-out var(--delay, 0s) infinite;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+/* Geser satu periode pola (gelombang/kontur) → loop tanpa lompatan */
+@keyframes shift-x {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--shift, -240px));
+  }
+}
+.loop-shift {
+  animation: shift-x var(--dur, 12s) linear var(--delay, 0s) infinite;
+}
+
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-360px);
+  }
+  to {
+    transform: translateX(1960px);
+  }
+}
+.loop-cloud {
+  animation: cloud-drift var(--dur, 90s) linear var(--delay, 0s) infinite;
+}
+
+@keyframes sun-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.03);
+  }
+}
+.loop-sun {
+  animation: sun-breathe var(--dur, 10s) ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes sun-rays {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.loop-rays {
+  animation: sun-rays var(--dur, 120s) linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Aliran di sepanjang edge: dash bergerak searah panah */
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+.loop-dash {
+  animation: dash-flow var(--dur, 1.8s) linear var(--delay, 0s) infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  70%,
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+.loop-pulse {
+  animation: pulse-ring var(--dur, 3.6s) ease-out var(--delay, 0s) infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Sorotan bergantian: tiap elemen menyala pada jendela waktunya sendiri */
+@keyframes seq-glow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  5%,
+  14% {
+    opacity: 1;
+  }
+  22% {
+    opacity: 0;
+  }
+}
+.loop-seq {
+  opacity: 0;
+  animation: seq-glow var(--dur, 16s) ease-in-out var(--delay, 0s) infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: var(--o0, 0.25);
+  }
+  50% {
+    opacity: var(--o1, 0.8);
+  }
+}
+.loop-breathe {
+  animation: breathe var(--dur, 5s) ease-in-out var(--delay, 0s) infinite;
+}
+
+/* Tanaman tumbuh: batang digambar → daun muncul → jeda → memudar → ulang */
+@keyframes plant-cycle {
+  0%,
+  86% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes stem-grow {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  35%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes leaf-a {
+  0%,
+  28% {
+    transform: scale(0);
+  }
+  40%,
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes leaf-b {
+  0%,
+  36% {
+    transform: scale(0);
+  }
+  48%,
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes bud {
+  0%,
+  44% {
+    transform: scale(0);
+  }
+  56%,
+  100% {
+    transform: scale(1);
+  }
+}
+.loop-plant {
+  animation: plant-cycle var(--dur, 11s) ease-in-out var(--delay, 0s) infinite;
+}
+.loop-stem {
+  stroke-dasharray: 1;
+  animation: stem-grow var(--dur, 11s) ease-out var(--delay, 0s) infinite;
+}
+.loop-leaf-a,
+.loop-leaf-b,
+.loop-bud {
+  transform-box: fill-box;
+  animation-duration: var(--dur, 11s);
+  animation-delay: var(--delay, 0s);
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.loop-leaf-a {
+  transform-origin: 50% 100%;
+  animation-name: leaf-a;
+}
+.loop-leaf-b {
+  transform-origin: 50% 100%;
+  animation-name: leaf-b;
+}
+.loop-bud {
+  transform-origin: 50% 100%;
+  animation-name: bud;
+}
+
+@keyframes progress-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+.loop-sheen {
+  animation: progress-sheen 3.2s ease-in-out infinite;
+}
+
+/* Rotasi di sekitar titik asal lokal elemen (mis. hub turbin di dalam <g translate>) */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.loop-spin {
+  animation: spin var(--dur, 9s) linear var(--delay, 0s) infinite;
+  transform-box: view-box;
+  transform-origin: 0 0;
+}
+
+@keyframes smoke {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(10px, -34px) scale(1.4);
+    opacity: 0;
+  }
+}
+.loop-smoke {
+  animation: smoke var(--dur, 5s) ease-out var(--delay, 0s) infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Matikan seluruh loop: preferensi sistem, toggle pengguna, thumbnail overview & cetak */
+@media (prefers-reduced-motion: reduce) {
+  [class*="loop-"] {
+    animation: none !important;
+  }
+  .decor-motion {
+    display: none !important;
+  }
+}
+html[data-decor="off"] [class*="loop-"],
+.static-scope [class*="loop-"] {
+  animation: none !important;
+}
+/* Elemen yang hanya bermakna saat bergerak (dash aliran, ring pulse) disembunyikan */
+html[data-decor="off"] .decor-motion,
+.static-scope .decor-motion {
+  display: none !important;
+}
+
+/* ---------- Cetak / ekspor PDF ---------- */
+@media screen {
+  .print-frame {
+    width: calc(1600px * var(--print-scale, 0.5));
+    height: calc(900px * var(--print-scale, 0.5));
+    overflow: hidden;
+  }
+  .print-inner {
+    transform: scale(var(--print-scale, 0.5));
+    transform-origin: top left;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@page {
+  size: 1600px 900px;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-frame {
+    width: 1600px;
+    height: 900px;
+    overflow: hidden;
+  }
+  .print-page {
+    break-after: page;
+    page-break-after: always;
+  }
+  .print-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
