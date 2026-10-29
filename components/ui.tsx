@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "motion/react";
-import type { ReactNode } from "react";
+import { createContext, useContext, useRef, type ReactNode } from "react";
 import { EASE, useIsStatic } from "./anim";
+import { useCinematic } from "./cinema";
 
 interface FadeUpProps {
   delay?: number;
@@ -11,14 +12,21 @@ interface FadeUpProps {
   children: ReactNode;
 }
 
+/**
+ * Jeda dasar konten di dalam slide. SlideShell memberi sedikit jeda agar konten
+ * menyusul setelah baris judul mulai naik (judul dikendalikan GSAP, konten oleh Motion).
+ */
+const SequenceOffset = createContext(0);
+
 export function FadeUp({ delay = 0, y = 18, className, children }: FadeUpProps) {
   const isStatic = useIsStatic();
+  const offset = useContext(SequenceOffset);
   return (
     <motion.div
       className={className}
       initial={isStatic ? false : { opacity: 0, y }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay, ease: EASE }}
+      transition={{ duration: 0.7, delay: delay + offset, ease: EASE }}
     >
       {children}
     </motion.div>
@@ -39,36 +47,48 @@ interface SlideShellProps {
   dark?: boolean;
 }
 
-/** Kerangka umum slide: lapisan dekorasi, label kecil, judul besar, lalu area konten. */
+/** Kerangka umum slide: lapisan dekorasi, label kecil, judul besar, lalu area konten. Urutan masuk diatur GSAP (lihat cinema.tsx). */
 export function SlideShell({ number, eyebrow, title, children, aside, backdrop, background = "bg-cream", dark = false }: SlideShellProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  useCinematic(ref);
   return (
-    <div className={`relative h-full overflow-hidden ${background}`}>
-      {backdrop && <div className="pointer-events-none absolute inset-0">{backdrop}</div>}
+    <div ref={ref} className={`relative h-full overflow-hidden ${background}`}>
+      {backdrop && (
+        <div data-cine="backdrop" className="pointer-events-none absolute inset-0">
+          <div data-cine-depth="10" className="absolute -inset-[10px]">
+            {backdrop}
+          </div>
+        </div>
+      )}
       <div className="relative flex h-full flex-col px-[112px] pt-[80px] pb-[84px]">
-        <FadeUp y={10} className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <div
             className={`flex items-center gap-4 font-mono text-[17px] tracking-[0.14em] uppercase ${dark ? "text-sage/80" : "text-muted"}`}
           >
             <span
+              data-cine="badge"
               className={`flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-[15px] font-semibold tracking-normal ${
                 dark ? "bg-fresh text-forest" : "bg-forest text-cream"
               }`}
             >
               {String(number).padStart(2, "0")}
             </span>
-            <span className={`h-px w-10 ${dark ? "bg-fresh/60" : "bg-leaf/60"}`} />
-            <span>{eyebrow}</span>
+            <span data-cine="rule" className={`h-px w-10 ${dark ? "bg-fresh/60" : "bg-leaf/60"}`} />
+            <span data-cine="eyebrow">{eyebrow}</span>
           </div>
-          {aside}
-        </FadeUp>
-        <FadeUp delay={0.08} className="mt-6 max-w-[1250px]">
+          {aside && <div data-cine="aside">{aside}</div>}
+        </div>
+        <div className="mt-6 max-w-[1250px]">
           <h2
+            data-cine="title"
             className={`text-[56px] leading-[1.06] font-semibold tracking-[-0.025em] text-balance ${dark ? "text-cream" : "text-forest"}`}
           >
             {title}
           </h2>
-        </FadeUp>
-        <div className="relative mt-12 min-h-0 flex-1">{children}</div>
+        </div>
+        <div className="relative mt-12 min-h-0 flex-1">
+          <SequenceOffset.Provider value={0.22}>{children}</SequenceOffset.Provider>
+        </div>
       </div>
     </div>
   );

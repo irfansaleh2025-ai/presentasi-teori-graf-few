@@ -1,9 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import type { CSSProperties } from "react";
+import { useRef, type CSSProperties } from "react";
 import type { Graph, GraphEdge, GraphNode, NodeTone } from "@/lib/graph-metrics";
-import { EASE, useIsStatic } from "./anim";
+import { gsap, useGSAP } from "@/lib/gsap";
+import { useIsStatic } from "./anim";
 
 export const edgeKey = (from: string, to: string) => `${from}>${to}`;
 
@@ -128,16 +129,52 @@ export function AnimatedGraph({
   autoHighlight = false,
 }: AnimatedGraphProps) {
   const isStatic = useIsStatic();
+  const svgRef = useRef<SVGSVGElement>(null);
   const byId = Object.fromEntries(graph.nodes.map((n) => [n.id, n]));
   const hasHighlight = Boolean(highlightNodes?.length || highlightEdges?.length);
   const edgesStart = delay + graph.nodes.length * nodeStagger + 0.1;
   const seqPeriod = 2.4;
 
+  // Konstruksi graf (GSAP): vertex masuk berurutan, lalu tiap edge digambar dari asal ke tujuan;
+  // panah dan tanda muncul saat garis tiba. Sorotan interaktif tetap memakai transisi CSS pada pembungkus lain.
+  useGSAP(
+    () => {
+      const svg = svgRef.current;
+      if (!svg || isStatic) return;
+      const all = (sel: string) => [...svg.querySelectorAll<SVGElement>(sel)];
+      gsap.from(all("[data-g-node]"), {
+        autoAlpha: 0,
+        scale: 0.55,
+        transformOrigin: "50% 50%",
+        duration: 0.55,
+        ease: "back.out(1.8)",
+        stagger: nodeStagger,
+        delay,
+        clearProps: "transform,opacity,visibility",
+      });
+      all("[data-g-edge]").forEach((edge, i) => {
+        const d = edgesStart + i * edgeStagger;
+        gsap.fromTo(
+          edge,
+          { drawSVG: "0%" },
+          { drawSVG: "100%", duration: 0.6, ease: "power2.inOut", delay: d, clearProps: "strokeDasharray,strokeDashoffset" },
+        );
+        const group = edge.parentElement!;
+        const tip = group.querySelectorAll("[data-g-tip]");
+        if (tip.length)
+          gsap.from(tip, { autoAlpha: 0, scale: 0.4, transformOrigin: "50% 50%", duration: 0.35, ease: "back.out(2)", delay: d + 0.45 });
+        const flowPath = group.querySelector("[data-g-flow]");
+        if (flowPath) gsap.from(flowPath, { autoAlpha: 0, duration: 0.4, delay: d + 0.55 });
+      });
+    },
+    { scope: svgRef, dependencies: [isStatic], revertOnUpdate: true },
+  );
+
   const curveOf = (e: GraphEdge) =>
     e.curve ?? (graph.edges.some((o) => o.from === e.to && o.to === e.from) ? 0.16 : 0);
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className={className} role="img">
+    <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} className={className} role="img">
       {graph.edges.map((e, i) => {
         const g = edgeGeometry(byId[e.from], byId[e.to], r, curveOf(e));
         const key = edgeKey(e.from, e.to);
@@ -145,49 +182,31 @@ export function AnimatedGraph({
         const dim = hasHighlight && !hi;
         const color = hi ? COLORS.edgeHi : COLORS.edge;
         const flowColor = hi ? COLORS.glow : TONES[byId[e.from].tone ?? "general"].flow;
-        const d = edgesStart + i * edgeStagger;
         return (
           <g key={key} style={{ opacity: dim ? 0.25 : 1, transition: "opacity 300ms ease" }}>
-            <motion.path
+            <path
+              data-g-edge
               d={g.d}
               fill="none"
               strokeWidth={hi ? 3.5 : 2.2}
               strokeLinecap="round"
               style={{ stroke: color, transition: "stroke 300ms ease, stroke-width 300ms ease" }}
-              initial={isStatic ? false : { pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 1 }}
-              transition={{
-                pathLength: { duration: 0.5, delay: d, ease: EASE },
-                opacity: { duration: 0.01, delay: d },
-              }}
             />
             {flow && !dim && (
-              <motion.path
+              <path
+                data-g-flow
                 d={g.d}
                 fill="none"
                 strokeWidth={hi ? 4 : 3}
                 strokeLinecap="round"
                 strokeDasharray="3 17"
                 className="loop-dash decor-motion"
-                style={{ stroke: flowColor, "--dur": hi ? "1.1s" : "1.8s", "--delay": `${-i * 0.3}s` } as Vars}
-                initial={isStatic ? false : { opacity: 0 }}
-                animate={{ opacity: 0.95 }}
-                transition={{ duration: 0.4, delay: isStatic ? 0 : d + 0.5 }}
+                style={{ stroke: flowColor, opacity: 0.95, "--dur": hi ? "1.1s" : "1.8s", "--delay": `${-i * 0.3}s` } as Vars}
               />
             )}
-            <motion.polygon
-              points={g.arrow}
-              style={{ fill: color, transition: "fill 300ms ease" }}
-              initial={isStatic ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2, delay: d + 0.42 }}
-            />
+            <polygon data-g-tip points={g.arrow} style={{ fill: color, transition: "fill 300ms ease" }} />
             {showSigns && e.sign && (
-              <motion.g
-                initial={isStatic ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3, delay: d + 0.45 }}
-              >
+              <g data-g-tip>
                 <circle cx={g.sign.x} cy={g.sign.y} r={12} style={{ fill: "var(--color-cream)" }} />
                 <text
                   x={g.sign.x}
@@ -201,7 +220,7 @@ export function AnimatedGraph({
                 >
                   {e.sign === "+" ? "+" : "−"}
                 </text>
-              </motion.g>
+              </g>
             )}
           </g>
         );
@@ -216,13 +235,7 @@ export function AnimatedGraph({
         const stroke = hi ? COLORS.nodeHi : accent ? COLORS.accent : tone.stroke;
         const value = values?.[n.id];
         return (
-          <motion.g
-            key={n.id}
-            initial={isStatic ? false : { opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: delay + i * nodeStagger, ease: EASE }}
-            style={{ transformBox: "fill-box", transformOrigin: "center" }}
-          >
+          <g key={n.id} data-g-node>
             <g style={{ opacity: dim ? 0.3 : 1, transition: "opacity 300ms ease" }}>
               {pulse && !dim && (
                 <circle
@@ -329,7 +342,7 @@ export function AnimatedGraph({
                 </motion.g>
               )}
             </AnimatePresence>
-          </motion.g>
+          </g>
         );
       })}
     </svg>

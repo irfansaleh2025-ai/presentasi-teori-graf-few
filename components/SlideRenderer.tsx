@@ -4,7 +4,7 @@ import type { ComponentType } from "react";
 import { slides } from "@/data/slides";
 import { CalculationSlide, ReconstructionSlide } from "./slides/calc";
 import { BackgroundSlide, DataSlide, ProblemSlide, TitleSlide } from "./slides/intro";
-import { CharacteristicsSlide, ConclusionSlide, CritiqueSlide, ResultsSlide, WorkflowSlide } from "./slides/results";
+import { CharacteristicsSlide, ConclusionSlide, CritiqueSlide, ResultsSlide, ThankYouSlide, WorkflowSlide } from "./slides/results";
 import { AlcSlide, MetricsSlide, ModelingSlide, TheorySlide } from "./slides/theory";
 import type { SlideProps } from "./slides/types";
 
@@ -24,6 +24,7 @@ const registry: Record<string, ComponentType<SlideProps>> = {
   s13: ResultsSlide,
   s14: CritiqueSlide,
   s15: ConclusionSlide,
+  s16: ThankYouSlide,
 };
 
 const noop = () => {};

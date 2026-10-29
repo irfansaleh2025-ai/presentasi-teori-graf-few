@@ -27,9 +27,14 @@ export const content = {
     eyebrow: "UTS Teori Graf",
     title: "Pemodelan Sistem Food–Energy–Water Menggunakan Teori Graf dan Adjusted Loop Centrality",
     group: {
-      members: ["Nama Anggota 1 — NIM", "Nama Anggota 2 — NIM", "Nama Anggota 3 — NIM", "Nama Anggota 4 — NIM"],
-      className: "Kelas: [isi kelas]",
-      institution: "[Program Studi · Institusi]",
+      members: [
+        "Irham Kadarusman — [NIM]",
+        "Irfan Saleh — [NIM]",
+        "Muhammad Zafran Abyan Dzaka — [NIM]",
+        "Ruben Marvel — [NIM]",
+      ],
+      className: "Kelas: J",
+      institution: "Program Studi Teknologi Informasi (TI)",
     },
   },
   s02: {
@@ -168,12 +173,49 @@ export const content = {
     eyebrow: "Hasil dan Interpretasi",
     title: "Penggerak dan penyebar perubahan",
     roles: [
-      { title: "Change initiators", desc: "Variabel yang berpotensi memulai perubahan dan memengaruhi banyak bagian sistem." },
-      { title: "Change disseminators", desc: "Variabel yang berperan meneruskan dan menyebarkan perubahan antarbagian sistem." },
+      { title: "Change initiators", subtitle: "Pemicu Perubahan", desc: "Variabel yang berpotensi memulai perubahan dan memengaruhi banyak bagian sistem." },
+      { title: "Change disseminators", subtitle: "Penghubung Perubahan", desc: "Variabel yang berperan meneruskan dan menyebarkan perubahan antarbagian sistem." },
     ],
-    clustersTitle: "Tujuh cluster yang dilaporkan",
-    clusterPlaceholder: "[Isi dari Tabel 4]",
-    figurePlaceholder: "[Ringkasan Gambar 6 jurnal asli]",
+    /** Tabel 4 jurnal: tiga peringkat teratas tiap peran */
+    variablesTitle: "Hasil Analisis Variabel Penting",
+    variablesNote: "Tabel 4",
+    initiators: [
+      { name: "Non-commodity local food products", metric: "Outdegree 7" },
+      { name: "Commodity crops", metric: "Outdegree 7" },
+      { name: "Urbanization", metric: "Outdegree 7" },
+    ],
+    disseminators: [
+      { name: "Climate activism", metric: "Peringkat 1" },
+      { name: "Recreational space", metric: "Peringkat 2" },
+      { name: "Water pollution", metric: "Peringkat 3" },
+    ],
+    disseminatorsNote: "Peringkat betweenness centrality dan ALC",
+    rolesSummary:
+      "Change initiators berpotensi memulai perubahan, sedangkan change disseminators menyebarkan pengaruhnya ke bagian sistem lain.",
+    /** Tabel 5 dan Gambar 6 jurnal */
+    clustersTitle: "Tujuh cluster",
+    clustersNote: "jumlah vertex per cluster · Tabel 5",
+    clusters: [
+      { name: "Iklim & Ekosistem", vertices: 13 },
+      { name: "Kebijakan Energi", vertices: 13 },
+      { name: "Pertanian", vertices: 16 },
+      { name: "Ekonomi & Air", vertices: 12 },
+      { name: "Konsumsi Pangan", vertices: 16 },
+      { name: "Perikanan", vertices: 3, isolated: true },
+      { name: "Urbanisasi", vertices: 12 },
+    ],
+    figure: {
+      title: "Gambar 6 — Visualisasi Cluster Graf",
+      /** Gambar asli dari PDF jurnal (objek gambar Fig. 6, tanpa modifikasi isi) */
+      src: "/figures/rozhkov-2025-gambar-6.webp",
+      width: 1800,
+      height: 1326,
+      alt: "Gambar 6 jurnal Rozhkov dkk. (2025): graf FEW dengan warna vertex menurut cluster dan ukuran vertex menurut betweenness centrality.",
+      caption: "Visualisasi modularity dan betweenness centrality pada graf FEW.",
+      source: "Sumber: Rozhkov dkk. (2025).",
+      notes: ["7 cluster", "modularity = 0,629", "warna simpul = cluster", "ukuran simpul = betweenness"],
+    },
+    takeaway: "Perubahan sistem FEW membutuhkan pemicu perubahan dan penghubung yang memperluas dampaknya.",
   },
   s14: {
     eyebrow: "Kritik dan Alternatif Metode",
@@ -208,6 +250,11 @@ export const content = {
       "Kombinasi keduanya membantu mengidentifikasi variabel strategis dalam sistem FEW.",
     ],
     quote: "Memahami hubungan dalam suatu sistem adalah langkah awal untuk menemukan titik perubahan yang paling strategis.",
+  },
+  s16: {
+    eyebrow: "Penutup",
+    title: "Terima kasih",
+    subtitle: "Pertanyaan dan diskusi dipersilakan.",
   },
 } as const;
 
@@ -292,7 +339,7 @@ export const slides: SlideMeta[] = [
     id: "s13",
     label: "Hasil dan Interpretasi",
     notes:
-      "Jelaskan dua peran: change initiators dan change disseminators. Lengkapi nama cluster dari Tabel 4 dan ringkasan Gambar 6 jurnal asli sebelum presentasi.",
+      "Jelaskan dua peran: change initiators dan change disseminators. Tekankan Climate activism sebagai jembatan utama antarcluster (betweenness tertinggi) dan Fishing sebagai satu-satunya cluster terisolasi.",
   },
   {
     id: "s14",
@@ -304,5 +351,10 @@ export const slides: SlideMeta[] = [
     id: "s15",
     label: "Kesimpulan",
     notes: "Tutup dengan kalimat penutup, lalu buka sesi tanya jawab.",
+  },
+  {
+    id: "s16",
+    label: "Terima kasih",
+    notes: "Ucapkan terima kasih atas perhatian audiens, lalu persilakan pertanyaan.",
   },
 ];

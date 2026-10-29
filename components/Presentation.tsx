@@ -13,6 +13,11 @@ import { SlideRenderer } from "./SlideRenderer";
 import { SlideStage } from "./SlideStage";
 
 const HIDE_DELAY = 2500;
+/** Jeda minimum antarnavigasi agar tombol yang ditekan cepat tidak menumpuk transisi. */
+const NAV_GAP = 320;
+/** Kurva wipe antarslide (in-out tajam, mendekati expo.inOut GSAP). */
+const WIPE_EASE = [0.76, 0, 0.24, 1] as const;
+const WIPE_DURATION = 0.8;
 
 export function openPresenter() {
   window.open(`/presenter${window.location.hash || "#1"}`, "few-presenter", "width=1360,height=820");
@@ -27,6 +32,18 @@ export function Presentation() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const lastNav = useRef(0);
+
+  const throttled = useCallback((fn: () => void) => {
+    return () => {
+      const now = performance.now();
+      if (now - lastNav.current < NAV_GAP) return;
+      lastNav.current = now;
+      fn();
+    };
+  }, []);
+  const next = throttled(deck.next);
+  const prev = throttled(deck.prev);
 
   const toggleFullscreen = useCallback(() => {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -71,11 +88,11 @@ export function Presentation() {
           f: toggleFullscreen,
         }
       : {
-          arrowright: deck.next,
-          arrowleft: deck.prev,
-          pagedown: deck.next,
-          pageup: deck.prev,
-          " ": deck.next,
+          arrowright: next,
+          arrowleft: prev,
+          pagedown: next,
+          pageup: prev,
+          " ": next,
           home: deck.first,
           end: deck.last,
           f: toggleFullscreen,
@@ -87,11 +104,29 @@ export function Presentation() {
         },
   );
 
-  const variants = {
-    enter: (d: number) => ({ opacity: 0, x: isStatic ? 0 : d * 64 }),
-    center: { opacity: 1, x: 0 },
-    exit: (d: number) => ({ opacity: 0, x: isStatic ? 0 : d * -64 }),
-  };
+  // Slide baru dibuka dengan mask dari arah navigasi di atas slide lama; slide lama mundur ke kedalaman.
+  const variants = isStatic
+    ? {
+        enter: { opacity: 0, zIndex: 2 },
+        center: { opacity: 1, zIndex: 2, transition: { duration: 0.3 } },
+        exit: { opacity: 0, zIndex: 1, transition: { duration: 0.3 } },
+      }
+    : {
+        enter: (d: number) => ({ clipPath: d > 0 ? "inset(0% 0% 0% 100%)" : "inset(0% 100% 0% 0%)", x: d * 80, zIndex: 2 }),
+        center: {
+          clipPath: "inset(0% 0% 0% 0%)",
+          x: 0,
+          zIndex: 2,
+          transition: { duration: WIPE_DURATION, ease: WIPE_EASE },
+        },
+        exit: (d: number) => ({
+          x: d * -120,
+          scale: 0.96,
+          opacity: 0.6,
+          zIndex: 1,
+          transition: { duration: WIPE_DURATION, ease: WIPE_EASE },
+        }),
+      };
 
   return (
     <main
@@ -108,7 +143,8 @@ export function Presentation() {
       </div>
 
       <SlideStage>
-        <AnimatePresence mode="wait" custom={dir} initial={false}>
+        <div className="absolute inset-0 bg-forest" aria-hidden />
+        <AnimatePresence custom={dir} initial={false}>
           <motion.div
             key={index}
             custom={dir}
@@ -116,14 +152,27 @@ export function Presentation() {
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.35, ease: EASE }}
-            className="absolute inset-0"
+            className="absolute inset-0 origin-center bg-cream"
           >
             <SlideRenderer index={index} step={step} onStep={deck.setStep} />
           </motion.div>
         </AnimatePresence>
+        {/* Garis pemandu yang menempel di tepi wipe, lalu memudar: transisi terasa sebagai satu struktur. */}
+        {!isStatic && (
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={index}
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 z-10 w-[3px] bg-gradient-to-b from-fresh via-leaf to-wheat"
+              initial={{ left: dir > 0 ? "100%" : "0%", opacity: 1 }}
+              animate={{ left: dir > 0 ? "0%" : "100%", opacity: [1, 1, 0] }}
+              exit={{ opacity: 0, transition: { duration: 0.1 } }}
+              transition={{ left: { duration: WIPE_DURATION, ease: WIPE_EASE }, opacity: { duration: WIPE_DURATION + 0.25, times: [0, 0.75, 1] } }}
+            />
+          </AnimatePresence>
+        )}
         {/* Indikator slide selalu tampil, samar */}
-        <div className="pointer-events-none absolute right-[112px] bottom-[30px] rounded-full bg-white/75 px-3 py-1 font-mono text-[15px] tracking-wider text-muted tabular-nums backdrop-blur-sm">
+        <div className="pointer-events-none absolute right-[112px] bottom-[30px] z-20 rounded-full bg-white/75 px-3 py-1 font-mono text-[15px] tracking-wider text-muted tabular-nums backdrop-blur-sm">
           <span className="font-semibold text-forest">{String(index + 1).padStart(2, "0")}</span> / {String(TOTAL).padStart(2, "0")}
         </div>
       </SlideStage>
@@ -156,8 +205,8 @@ export function Presentation() {
         notesOpen={notes}
         decorOn={decorOn}
         onDecor={toggleDecor}
-        onPrev={deck.prev}
-        onNext={deck.next}
+        onPrev={prev}
+        onNext={next}
         onOverview={() => setOverview((v) => !v)}
         onFullscreen={toggleFullscreen}
         onNotes={() => setNotes((v) => !v)}

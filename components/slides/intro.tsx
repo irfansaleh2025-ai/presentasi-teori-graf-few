@@ -2,6 +2,7 @@
 
 import { ArrowRight, GitBranch, HelpCircle, MapPin, Sprout, Target, Users } from "lucide-react";
 import { content, source } from "@/data/slides";
+import { Cinematic } from "../cinema";
 import { CornerSprig, DecorLayer } from "../decor";
 import { SlideScene } from "../scenes";
 import { FewDiagram } from "../FewDiagram";
@@ -13,20 +14,29 @@ import { Bullets, FadeUp, SlideShell } from "../ui";
 export function TitleSlide() {
   const c = content.s01;
   return (
-    <div className="relative h-full overflow-hidden bg-cream">
-<SlideScene n={1} />
+    <Cinematic className="relative h-full overflow-hidden bg-cream">
+      {/* Pembuka: lanskap naik dari kedalaman, judul tersusun per baris, lalu sumber dan diagram FEW. */}
+      <div data-cine="backdrop" className="pointer-events-none absolute inset-0">
+        <div data-cine-depth="14" className="absolute -inset-[14px]">
+          <SlideScene n={1} />
+        </div>
+      </div>
 
       <div className="relative h-full px-[112px] pt-[84px]">
-        <FadeUp y={10} className="flex items-center gap-4 font-mono text-[17px] tracking-[0.14em] text-muted uppercase">
+        <div data-cine="eyebrow" data-cine-at="0.1" className="flex items-center gap-4 font-mono text-[17px] tracking-[0.14em] text-muted uppercase">
           <Sprout className="h-5 w-5 text-leaf" strokeWidth={2} />
           {c.eyebrow}
-        </FadeUp>
+        </div>
 
         <div className="mt-10 max-w-[940px]">
-          <FadeUp delay={0.1}>
-            <h1 className="text-[66px] leading-[1.04] font-semibold tracking-[-0.03em] text-balance text-forest">{c.title}</h1>
-          </FadeUp>
-          <FadeUp delay={0.3} className="mt-8 flex flex-col gap-2 border-l-[3px] border-wheat pl-6">
+          <h1
+            data-cine="title"
+            data-cine-at="0.2"
+            className="text-[66px] leading-[1.04] font-semibold tracking-[-0.03em] text-balance text-forest"
+          >
+            {c.title}
+          </h1>
+          <FadeUp delay={0.75} className="mt-8 flex flex-col gap-2 border-l-[3px] border-wheat pl-6">
             <span className="font-mono text-[15px] tracking-[0.12em] text-muted uppercase">Berdasarkan artikel</span>
             <span className="text-[24px] leading-snug text-charcoal/90 italic">“{source.articleTitle}”</span>
             <span className="text-[21px] text-muted">
@@ -35,12 +45,12 @@ export function TitleSlide() {
           </FadeUp>
         </div>
 
-        <FadeUp delay={0.2} className="absolute top-[70px] right-[90px] h-[420px] w-[470px]">
-          <FewDiagram labels={false} delay={0.5} />
+        <FadeUp delay={0.35} className="absolute top-[70px] right-[90px] h-[420px] w-[470px]">
+          <FewDiagram labels={false} delay={0.6} />
         </FadeUp>
 
         <FadeUp
-          delay={0.55}
+          delay={1.0}
           className="absolute bottom-[64px] left-[112px] flex items-end gap-14 rounded-2xl border border-white/70 bg-white/85 px-8 py-5 shadow-[0_16px_40px_-24px_rgba(35,75,53,0.5)] backdrop-blur-sm"
         >
           <div className="grid grid-cols-2 gap-x-10 gap-y-1 text-[18px] text-charcoal/85">
@@ -54,7 +64,7 @@ export function TitleSlide() {
           </div>
         </FadeUp>
       </div>
-    </div>
+    </Cinematic>
   );
 }
 
