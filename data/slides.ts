@@ -28,7 +28,7 @@ export const content = {
     title: "Pemodelan Sistem Food–Energy–Water Menggunakan Teori Graf dan Adjusted Loop Centrality",
     group: {
       members: [
-        "Irham Kadarusman — 25051130056",
+        "Irham Kadarusman — 250511300566",
         "Irfan Saleh — 25051130082",
         "Muhammad Zafran Abyan Dzaka — 25051130071",
         "Ruben Marvel — 25051130077",
