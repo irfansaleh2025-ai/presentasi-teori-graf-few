@@ -28,10 +28,10 @@ export const content = {
     title: "Pemodelan Sistem Food–Energy–Water Menggunakan Teori Graf dan Adjusted Loop Centrality",
     group: {
       members: [
-        "Irham Kadarusman — [NIM]",
-        "Irfan Saleh — [NIM]",
-        "Muhammad Zafran Abyan Dzaka — [NIM]",
-        "Ruben Marvel — [NIM]",
+        "Irham Kadarusman — 25051130056",
+        "Irfan Saleh — 25051130082",
+        "Muhammad Zafran Abyan Dzaka — 25051130071",
+        "Ruben Marvel — 25051130077",
       ],
       className: "Kelas: J",
       institution: "Program Studi Teknologi Informasi (TI)",
